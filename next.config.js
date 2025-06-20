@@ -16,6 +16,23 @@ const nextConfig = {
     // https://nextjs.org/docs/api-reference/next.config.js/ignoring-typescript-errors
     ignoreBuildErrors: true,
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN', // or 'ALLOWALL' for any domain
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: 'frame-ancestors self https://sm.cms.jiminy.co.nz',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
