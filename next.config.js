@@ -27,7 +27,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: 'frame-ancestors self https://sm.cms.jiminy.co.nz',
+            value: 'frame-ancestors \'self\' https://sm.cms.jiminy.co.nz',
           },
         ],
       },
