@@ -2,6 +2,7 @@ import { API_PREFIX } from '@/config'
 import Toast from '@/app/components/base/toast'
 import type { AnnotationReply, MessageEnd, MessageReplace, ThoughtItem } from '@/app/components/chat/type'
 import type { VisionFile } from '@/types/app'
+import { error, log } from '@/utils/iframe-diagnostics'
 
 const TIME_OUT = 100000
 
@@ -160,18 +161,44 @@ const handleStream = (
   let buffer = ''
   let bufferObj: Record<string, any>
   let isFirstMessage = true
+
+  let chunkCount = 0
+  let totalBytesReceived = 0
+  let messagesProcessed = 0
+
   function read() {
     let hasError = false
     reader?.read().then((result: any) => {
+      chunkCount++
       if (result.done) {
-        onCompleted && onCompleted()
+        log('=== STREAM READER COMPLETED ===', {
+          totalChunks: chunkCount,
+          totalBytes: totalBytesReceived,
+          messagesProcessed,
+          timestamp: Date.now(),
+        })
+
+        try {
+          if (onCompleted) {
+            log('Calling onCompleted callback from handleStream')
+            onCompleted && onCompleted()
+            log('onCompleted callback executed successfully from handleStream')
+          }
+        }
+        catch (e) {
+          error('ERROR executing onCompleted callback in handleStream', e)
+        }
         return
       }
+      if (result.value)
+        totalBytesReceived += result.value.length
+
       buffer += decoder.decode(result.value, { stream: true })
       const lines = buffer.split('\n')
       try {
         lines.forEach((message) => {
           if (message.startsWith('data: ')) { // check if it starts with data:
+            messagesProcessed++
             try {
               bufferObj = JSON.parse(message.substring(6)) as Record<string, any>// remove data: and parse as json
             }
@@ -195,6 +222,14 @@ const handleStream = (
               return
             }
             if (bufferObj.event === 'message' || bufferObj.event === 'agent_message') {
+              // Optional: Log chunk progress every 10 chunks
+              if (chunkCount % 10 === 0) {
+                log(`Processing chunk #${chunkCount}`, {
+                  totalBytes: totalBytesReceived,
+                  messagesProcessed,
+                  answerLength: bufferObj.answer?.length || 0,
+                })
+              }
               // can not use format here. Because message is splited.
               onData(unicodeToChar(bufferObj.answer), isFirstMessage, {
                 conversationId: bufferObj.conversation_id,
@@ -232,6 +267,11 @@ const handleStream = (
         buffer = lines[lines.length - 1]
       }
       catch (e) {
+        error('Error processing stream chunk', {
+          chunkNumber: chunkCount,
+          error: e,
+          totalBytes: totalBytesReceived,
+        })
         onData('', false, {
           conversationId: undefined,
           messageId: '',
@@ -243,6 +283,15 @@ const handleStream = (
       }
       if (!hasError)
         read()
+    }).catch((readError) => {
+      error('Error in reader.read()', {
+        chunkNumber: chunkCount,
+        readError: readError?.toString(),
+        totalBytes: totalBytesReceived,
+      })
+
+      hasError = true
+      onCompleted?.(true)
     })
   }
   read()

@@ -22,6 +22,7 @@ import AppUnavailable from '@/app/components/app-unavailable'
 import { API_KEY, APP_ID, APP_INFO, isShowPrompt, promptTemplate } from '@/config'
 import type { Annotation as AnnotationType } from '@/types/log'
 import { addFileInfos, sortAgentSorts } from '@/utils/tools'
+import { error, log } from '@/utils/iframe-diagnostics'
 
 export type IMainProps = {
   params: any
@@ -212,7 +213,7 @@ const Main: FC<IMainProps> = () => {
       isAnswer: true,
       feedbackDisabled: true,
       isOpeningStatement: isShowPrompt,
-      suggestedQuestions: suggestedQuestions,
+      suggestedQuestions,
     }
     if (calculatedIntroduction)
       return [openStatement]
@@ -246,13 +247,13 @@ const Main: FC<IMainProps> = () => {
         setNewConversationInfo({
           name: t('app.chat.newChatDefaultName'),
           introduction,
-          suggested_questions
+          suggested_questions,
         })
         if (isNotNewConversation) {
           setExistConversationInfo({
             name: currentConversation.name || t('app.chat.newChatDefaultName'),
             introduction,
-            suggested_questions
+            suggested_questions,
           })
         }
         const prompt_variables = userInputsFormToPromptVariables(user_input_form)
@@ -471,7 +472,21 @@ const Main: FC<IMainProps> = () => {
         resetNewConversationInputs()
         setChatNotStarted()
         setCurrConversationId(tempNewConversationId, APP_ID, true)
-        setRespondingFalse()
+        try {
+          log('Calling setRespondingFalse from onCompleted')
+          setRespondingFalse()
+          log('setRespondingFalse called successfully')
+
+          // Verify state change
+          setTimeout(() => {
+            log('State verification after setRespondingFalse', {
+              isRespondingAfter: isResponding,
+            })
+          }, 100)
+        }
+        catch (e) {
+          error('ERROR in onCompleted while calling setRespondingFalse', e)
+        }
       },
       onFile(file) {
         const lastThought = responseItem.agent_thoughts?.[responseItem.agent_thoughts?.length - 1]
@@ -565,7 +580,14 @@ const Main: FC<IMainProps> = () => {
         ))
       },
       onError() {
-        setRespondingFalse()
+        try {
+          setRespondingFalse()
+          log('Successfully set responding false in onError')
+        }
+        catch (e) {
+          error('Failed to set responding false in onError', e)
+        }
+        // setRespondingFalse()
         // role back placeholder answer
         setChatList(produce(getChatList(), (draft) => {
           draft.splice(draft.findIndex(item => item.id === placeholderAnswerId), 1)
