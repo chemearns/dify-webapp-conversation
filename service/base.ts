@@ -298,11 +298,21 @@ const handleStream = (
 }
 
 const baseFetch = (url: string, fetchOptions: any, { needAllResponseContent }: IOtherOptions) => {
+  const requestId = `fetch-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
   const options = Object.assign({}, baseOptions, fetchOptions)
 
   const urlPrefix = API_PREFIX
 
   let urlWithPrefix = `${urlPrefix}${url.startsWith('/') ? url : `/${url}`}`
+
+  log('baseFetch starting', {
+    requestId,
+    url: urlWithPrefix,
+    method: options.method,
+    hasBody: !!options.body,
+    isInIframe: window !== window.parent,
+    timestamp: Date.now(),
+  })
 
   const { method, params, body } = options
   // handle query
@@ -323,19 +333,55 @@ const baseFetch = (url: string, fetchOptions: any, { needAllResponseContent }: I
   if (body)
     options.body = JSON.stringify(body)
 
+  log('About to call globalThis.fetch', {
+    requestId,
+    finalUrl: urlWithPrefix,
+    optionsKeys: Object.keys(options),
+    timestamp: Date.now(),
+  })
+
   // Handle timeout
   return Promise.race([
     new Promise((resolve, reject) => {
       setTimeout(() => {
+        error('Request timeout reached', {
+          requestId,
+          url: urlWithPrefix,
+          timeout: TIME_OUT,
+          timestamp: Date.now(),
+        })
+
         reject(new Error('request timeout'))
       }, TIME_OUT)
     }),
     new Promise((resolve, reject) => {
+      log('Calling globalThis.fetch now', {
+        requestId,
+        timestamp: Date.now(),
+      })
+
       globalThis.fetch(urlWithPrefix, options)
         .then((res: any) => {
+          log('globalThis.fetch returned', {
+            requestId,
+            status: res.status,
+            statusText: res.statusText,
+            ok: res.ok,
+            headers: Object.fromEntries(res.headers.entries()),
+            timestamp: Date.now(),
+          })
+
           const resClone = res.clone()
+
           // Error handler
           if (!/^(2|3)\d{2}$/.test(res.status)) {
+            error('Non-success HTTP status', {
+              requestId,
+              status: res.status,
+              statusText: res.statusText,
+              timestamp: Date.now(),
+            })
+
             try {
               const bodyJson = res.json()
               switch (res.status) {
@@ -347,12 +393,24 @@ const baseFetch = (url: string, fetchOptions: any, { needAllResponseContent }: I
                   // eslint-disable-next-line no-new
                   new Promise(() => {
                     bodyJson.then((data: any) => {
+                      error('Error response body', {
+                        requestId,
+                        errorData: data,
+                        timestamp: Date.now(),
+                      })
+
                       Toast.notify({ type: 'error', message: data.message })
                     })
                   })
               }
             }
             catch (e) {
+              error('Failed to parse error response', {
+                requestId,
+                parseError: e?.toString(),
+                timestamp: Date.now(),
+              })
+
               Toast.notify({ type: 'error', message: `${e}` })
             }
 
@@ -361,18 +419,49 @@ const baseFetch = (url: string, fetchOptions: any, { needAllResponseContent }: I
 
           // handle delete api. Delete api not return content.
           if (res.status === 204) {
+            log('Request completed with 204 status', { requestId })
             resolve({ result: 'success' })
             return
           }
 
           // return data
+          log('About to parse response data', {
+            requestId,
+            contentType: options.headers.get('Content-type'),
+            timestamp: Date.now(),
+          })
+
+          // return data
           const data = options.headers.get('Content-type') === ContentType.download ? res.blob() : res.json()
 
-          resolve(needAllResponseContent ? resClone : data)
+          data.then((parsedData: any) => {
+            log('Response data parsed successfully', {
+              requestId,
+              dataType: typeof parsedData,
+              hasData: !!parsedData,
+              timestamp: Date.now(),
+            })
+            resolve(needAllResponseContent ? resClone : parsedData)
+          }).catch((parseError: any) => {
+            error('Failed to parse response data', {
+              requestId,
+              parseError: parseError?.toString(),
+              timestamp: Date.now(),
+            })
+            reject(parseError)
+          })
+
+          // resolve(needAllResponseContent ? resClone : data)
         })
-        .catch((err) => {
-          Toast.notify({ type: 'error', message: err })
-          reject(err)
+        .catch((fetchError) => {
+          error('globalThis.fetch threw error', {
+            requestId,
+            fetchError: fetchError?.toString(),
+            stack: fetchError instanceof Error ? fetchError.stack : undefined,
+            timestamp: Date.now(),
+          })
+          Toast.notify({ type: 'error', message: fetchError })
+          reject(fetchError)
         })
     }),
   ])
@@ -498,7 +587,39 @@ export const ssePost = (
 }
 
 export const request = (url: string, options = {}, otherOptions?: IOtherOptions) => {
+  const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
+
+  log('Base request called', {
+    requestId,
+    url,
+    method: (options as any)?.method || 'GET',
+    isInIframe: window !== window.parent,
+    timestamp: Date.now(),
+  })
+
   return baseFetch(url, options, otherOptions || {})
+    .then((result) => {
+      log('Base request completed', {
+        requestId,
+        url,
+        success: true,
+        resultType: typeof result,
+        hasData: result && typeof result === 'object' && 'data' in result,
+        timestamp: Date.now(),
+      })
+      return result
+    })
+    .catch((err) => {
+      error('Base request failed', {
+        requestId,
+        url,
+        error: err?.toString(),
+        stack: err instanceof Error ? err.stack : undefined,
+        timestamp: Date.now(),
+      })
+      throw err
+    })
+  // return baseFetch(url, options, otherOptions || {})
 }
 
 export const get = (url: string, options = {}, otherOptions?: IOtherOptions) => {

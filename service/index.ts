@@ -1,6 +1,7 @@
 import type { IOnCompleted, IOnData, IOnError, IOnFile, IOnMessageEnd, IOnMessageReplace, IOnNodeFinished, IOnNodeStarted, IOnThought, IOnWorkflowFinished, IOnWorkflowStarted } from './base'
 import { get, post, ssePost } from './base'
 import type { Feedbacktype } from '@/types/app'
+import { error, log } from '@/utils/iframe-diagnostics'
 
 export const sendChatMessage = async (
   body: Record<string, any>,
@@ -41,7 +42,29 @@ export const sendChatMessage = async (
 }
 
 export const fetchConversations = async () => {
-  return get('conversations', { params: { limit: 100, first_id: '' } })
+  log('fetchConversations called', {
+    isInIframe: window !== window.parent,
+    timestamp: Date.now(),
+  })
+
+  try {
+    log('About to call get() for conversations')
+    const result = await get('conversations', { params: { limit: 100, first_id: '' } })
+    log('fetchConversations completed successfully', {
+      resultType: typeof result,
+      hasData: !!(result as any)?.data,
+      timestamp: Date.now(),
+    })
+    return result
+  }
+  catch (err) {
+    error('fetchConversations failed', {
+      error: err?.toString(),
+      stack: err instanceof Error ? err.stack : undefined,
+      timestamp: Date.now(),
+    })
+    throw err
+  }
 }
 
 export const fetchChatList = async (conversationId: string) => {
@@ -58,5 +81,29 @@ export const updateFeedback = async ({ url, body }: { url: string; body: Feedbac
 }
 
 export const generationConversationName = async (id: string) => {
-  return post(`conversations/${id}/name`, { body: { auto_generate: true } })
+  log('generationConversationName called', {
+    conversationId: id,
+    isInIframe: window !== window.parent,
+    timestamp: Date.now(),
+  })
+
+  try {
+    log('About to call post() for conversation name generation')
+    const result = await post(`conversations/${id}/name`, { body: { auto_generate: true } })
+    log('generationConversationName completed successfully', {
+      resultType: typeof result,
+      hasData: !!(result as any)?.data,
+      timestamp: Date.now(),
+    })
+    return result
+  }
+  catch (err) {
+    error('generationConversationName failed', {
+      error: err?.toString(),
+      stack: err instanceof Error ? err.stack : undefined,
+      timestamp: Date.now(),
+    })
+    throw err
+  }
+  // return post(`conversations/${id}/name`, { body: { auto_generate: true } })
 }
