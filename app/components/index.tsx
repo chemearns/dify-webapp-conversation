@@ -430,12 +430,31 @@ const Main: FC<IMainProps> = () => {
     const prevTempNewConversationId = getCurrConversationId() || '-1'
     let tempNewConversationId = ''
 
+    log('=== REQUEST DATA BEING SENT ===', {
+      messageNumber: getChatList().filter(item => !item.isAnswer).length + 1,
+      dataKeys: Object.keys(data),
+      conversationId: data.conversation_id,
+      hasInputs: !!data.inputs,
+      inputsKeys: data.inputs ? Object.keys(data.inputs) : [],
+      queryLength: data.query?.length,
+      hasFiles: !!data.files && data.files.length > 0,
+      fileCount: data.files?.length || 0,
+      isNewConversation: data.conversation_id === null,
+      timestamp: Date.now(),
+    })
+
     setRespondingTrue()
+
+    // Add request success/failure tracking
+    let requestSucceeded = false
+
     sendChatMessage(data, {
       getAbortController: (abortController) => {
         setAbortController(abortController)
       },
       onData: (message: string, isFirstMessage: boolean, { conversationId: newConversationId, messageId, taskId }: any) => {
+        requestSucceeded = true
+
         if (!isAgentMode) {
           responseItem.content = responseItem.content + message
         }
@@ -447,6 +466,17 @@ const Main: FC<IMainProps> = () => {
         if (messageId && !hasSetResponseId) {
           responseItem.id = messageId
           hasSetResponseId = true
+        }
+
+        if (isFirstMessage) {
+          log('=== FIRST DATA CHUNK RECEIVED ===', {
+            messageNumber: getChatList().filter(item => !item.isAnswer).length,
+            newConversationId,
+            messageId,
+            taskId,
+            chunkLength: message.length,
+            timestamp: Date.now(),
+          })
         }
 
         if (isFirstMessage && newConversationId)
@@ -468,6 +498,7 @@ const Main: FC<IMainProps> = () => {
       async onCompleted(hasError?: boolean) {
         log('=== MAIN COMPONENT onCompleted CALLED ===', {
           hasError,
+          requestSucceeded,
           isResponding,
           timestamp: Date.now(),
           conversationId: tempNewConversationId,
@@ -685,7 +716,11 @@ const Main: FC<IMainProps> = () => {
       },
       onError() {
         error('=== MAIN COMPONENT onError CALLED ===', {
+          messageNumber: getChatList().filter(item => !item.isAnswer).length,
+          requestSucceeded,
           isResponding,
+          currConversationId,
+          isNewConversation,
           timestamp: Date.now(),
         })
 
