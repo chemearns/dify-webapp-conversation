@@ -469,28 +469,64 @@ const Main: FC<IMainProps> = () => {
           return
         }
 
-        log('Processing conversation logic in onCompleted')
+        log('Step 1: About to process conversation logic')
 
-        if (getConversationIdChangeBecauseOfNew()) {
-          log('Fetching conversations due to new conversation')
+        try {
+          if (getConversationIdChangeBecauseOfNew()) {
+            log('Fetching conversations due to new conversation')
 
-          const { data: allConversations }: any = await fetchConversations()
-          const newItem: any = await generationConversationName(allConversations[0].id)
+            const { data: allConversations }: any = await fetchConversations()
 
-          const newAllConversations = produce(allConversations, (draft: any) => {
-            draft[0].name = newItem.name
-          })
-          setConversationList(newAllConversations as any)
+            log('Conversations fetched, generating name...', {
+              conversationsCount: allConversations?.length,
+              firstConversation: allConversations?.[0],
+              hasFirstId: !!allConversations?.[0]?.id,
+            })
 
-          log('Conversation list updated')
+            // Add safety check:
+            if (!allConversations || allConversations.length === 0) {
+              error('No conversations returned from fetchConversations')
+              // Skip conversation name generation and continue
+            }
+            else if (!allConversations[0]?.id) {
+              error('First conversation has no id', { firstConversation: allConversations[0] })
+              // Skip conversation name generation and continue
+            }
+            else {
+              log('About to generate conversation name', {
+                conversationId: allConversations[0].id,
+              })
+
+              const newItem: any = await generationConversationName(allConversations[0].id)
+              log('Step 4: Name generated, updating list...')
+
+              const newAllConversations = produce(allConversations, (draft: any) => {
+                draft[0].name = newItem.name
+              })
+              setConversationList(newAllConversations as any)
+
+              log('Step 5: Conversation list updated')
+            }
+            // const newItem: any = await generationConversationName(allConversations[0].id)
+          }
+          else {
+            log('Step 2: Skipping conversation fetch (not new conversation)')
+          }
+
+          log('Step 6: Setting conversation states...')
+          setConversationIdChangeBecauseOfNew(false)
+          resetNewConversationInputs()
+          setChatNotStarted()
+          setCurrConversationId(tempNewConversationId, APP_ID, true)
+          log('Step 7: Conversation states set')
         }
-
-        log('Setting conversation states')
-
-        setConversationIdChangeBecauseOfNew(false)
-        resetNewConversationInputs()
-        setChatNotStarted()
-        setCurrConversationId(tempNewConversationId, APP_ID, true)
+        catch (conversationError) {
+          error('ERROR in conversation logic', {
+            error: conversationError?.toString(),
+            stack: conversationError instanceof Error ? conversationError.stack : undefined,
+          })
+          // Continue anyway to try setRespondingFalse
+        }
 
         try {
           log('=== ABOUT TO CALL setRespondingFalse ===', {
