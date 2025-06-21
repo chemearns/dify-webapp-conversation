@@ -427,6 +427,14 @@ export const ssePost = (
     onError,
   }: IOtherOptions,
 ) => {
+  log('ssePost called with callbacks', {
+    hasOnData: !!onData,
+    hasOnCompleted: !!onCompleted,
+    hasOnError: !!onError,
+    onCompletedType: typeof onCompleted,
+    url,
+  })
+
   const options = Object.assign({}, baseOptions, {
     method: 'POST',
   }, fetchOptions)
@@ -450,6 +458,10 @@ export const ssePost = (
         onError?.('Server Error')
         return
       }
+      log('About to call handleStream with onCompleted callback', {
+        hasOnCompleted: !!onCompleted,
+        onCompletedFunction: onCompleted?.toString().substring(0, 100),
+      })
       return handleStream(res, (str: string, isFirstMessage: boolean, moreInfo: IOnDataMoreInfo) => {
         if (moreInfo.errorMessage) {
           Toast.notify({ type: 'error', message: moreInfo.errorMessage })
@@ -457,9 +469,29 @@ export const ssePost = (
         }
         onData?.(str, isFirstMessage, moreInfo)
       }, () => {
-        onCompleted?.()
+        log('=== ssePost onCompleted wrapper called ===', {
+          hasMainOnCompleted: !!onCompleted,
+          timestamp: Date.now(),
+        })
+        try {
+          if (onCompleted) {
+            log('Calling main component onCompleted from ssePost wrapper')
+            onCompleted()
+            log('Main component onCompleted returned from ssePost wrapper')
+          }
+          else {
+            error('onCompleted callback is null/undefined in ssePost wrapper')
+          }
+        }
+        catch (e) {
+          error('ERROR calling main onCompleted from ssePost wrapper', {
+            error: e?.toString(),
+            stack: e instanceof Error ? e.stack : undefined,
+          })
+        }
       }, onThought, onMessageEnd, onMessageReplace, onFile, onWorkflowStarted, onWorkflowFinished, onNodeStarted, onNodeFinished)
     }).catch((e) => {
+      error('ssePost fetch error', e)
       Toast.notify({ type: 'error', message: e })
       onError?.(e)
     })

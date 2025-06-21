@@ -456,10 +456,24 @@ const Main: FC<IMainProps> = () => {
         })
       },
       async onCompleted(hasError?: boolean) {
-        if (hasError)
+        log('=== MAIN COMPONENT onCompleted CALLED ===', {
+          hasError,
+          isResponding,
+          timestamp: Date.now(),
+          conversationId: tempNewConversationId,
+          prevConversationId: prevTempNewConversationId,
+        })
+
+        if (hasError) {
+          log('onCompleted returning early due to hasError=true')
           return
+        }
+
+        log('Processing conversation logic in onCompleted')
 
         if (getConversationIdChangeBecauseOfNew()) {
+          log('Fetching conversations due to new conversation')
+
           const { data: allConversations }: any = await fetchConversations()
           const newItem: any = await generationConversationName(allConversations[0].id)
 
@@ -467,26 +481,70 @@ const Main: FC<IMainProps> = () => {
             draft[0].name = newItem.name
           })
           setConversationList(newAllConversations as any)
+
+          log('Conversation list updated')
         }
+
+        log('Setting conversation states')
+
         setConversationIdChangeBecauseOfNew(false)
         resetNewConversationInputs()
         setChatNotStarted()
         setCurrConversationId(tempNewConversationId, APP_ID, true)
+
         try {
-          log('Calling setRespondingFalse from onCompleted')
+          log('=== ABOUT TO CALL setRespondingFalse ===', {
+            currentIsResponding: isResponding,
+            timestamp: Date.now(),
+          })
+
           setRespondingFalse()
-          log('setRespondingFalse called successfully')
+
+          log('=== setRespondingFalse CALLED SUCCESSFULLY ===', {
+            timestamp: Date.now(),
+          })
 
           // Verify state change
           setTimeout(() => {
-            log('State verification after setRespondingFalse', {
-              isRespondingAfter: isResponding,
+            log('State check: 50ms delay', {
+              isResponding,
+              timestamp: Date.now(),
+            })
+          }, 50)
+
+          setTimeout(() => {
+            log('State check: 100ms delay', {
+              isResponding,
+              timestamp: Date.now(),
             })
           }, 100)
+
+          setTimeout(() => {
+            log('State check: 500ms delay', {
+              isResponding,
+              timestamp: Date.now(),
+            })
+          }, 500)
+
+          setTimeout(() => {
+            log('State check: 1000ms delay', {
+              isResponding,
+              timestamp: Date.now(),
+            })
+          }, 1000)
         }
         catch (e) {
-          error('ERROR in onCompleted while calling setRespondingFalse', e)
+          error('=== ERROR in onCompleted while calling setRespondingFalse ===', {
+            error: e?.toString(),
+            stack: e instanceof Error ? e.stack : undefined,
+            currentIsResponding: isResponding,
+            timestamp: Date.now(),
+          })
         }
+
+        log('=== MAIN COMPONENT onCompleted FINISHED ===', {
+          timestamp: Date.now(),
+        })
       },
       onFile(file) {
         const lastThought = responseItem.agent_thoughts?.[responseItem.agent_thoughts?.length - 1]
@@ -580,18 +638,29 @@ const Main: FC<IMainProps> = () => {
         ))
       },
       onError() {
+        error('=== MAIN COMPONENT onError CALLED ===', {
+          isResponding,
+          timestamp: Date.now(),
+        })
+
         try {
+          log('Calling setRespondingFalse from onError')
           setRespondingFalse()
           log('Successfully set responding false in onError')
         }
         catch (e) {
-          error('Failed to set responding false in onError', e)
+          error('Failed to set responding false in onError', {
+            error: e?.toString(),
+            stack: e instanceof Error ? e.stack : undefined,
+          })
         }
-        // setRespondingFalse()
-        // role back placeholder answer
+
+        // Remove placeholder answer
         setChatList(produce(getChatList(), (draft) => {
           draft.splice(draft.findIndex(item => item.id === placeholderAnswerId), 1)
         }))
+
+        log('onError processing completed')
       },
       onWorkflowStarted: ({ workflow_run_id, task_id }) => {
         // taskIdRef.current = task_id
