@@ -23,7 +23,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN', // or 'ALLOWALL' for any domain
+            value: 'ALLOWALL',
           },
           {
             key: 'Content-Security-Policy',
