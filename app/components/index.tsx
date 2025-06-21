@@ -349,7 +349,17 @@ const Main: FC<IMainProps> = () => {
   }
 
   const handleSend = async (message: string, files?: VisionFile[]) => {
+    log('=== STARTING NEW MESSAGE SEND ===', {
+      message: message.substring(0, 50),
+      isResponding,
+      currConversationId,
+      isNewConversation,
+      hasSetAppConfig,
+      timestamp: Date.now(),
+    })
+
     if (isResponding) {
+      log('Blocking send - already responding')
       notify({ type: 'info', message: t('app.errorMessage.waitForResponse') })
       return
     }
