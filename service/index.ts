@@ -3,6 +3,11 @@ import { get, post, ssePost } from './base'
 import type { Feedbacktype } from '@/types/app'
 import { error, log } from '@/utils/iframe-diagnostics'
 
+const storeSessionId = (id: string) => {
+  if (typeof window !== 'undefined')
+    localStorage.setItem('dify_session_id', id)
+}
+
 export const sendChatMessage = async (
   body: Record<string, any>,
   {
@@ -49,7 +54,11 @@ export const fetchConversations = async () => {
 
   try {
     log('About to call get() for conversations')
-    const result = await get('conversations', { params: { limit: 100, first_id: '' } })
+    const result = await get('conversations', { params: { limit: 100, first_id: '' } }) as { data?: any[] }
+
+    if (result.data && Array.isArray(result.data) && result.data.length > 0)
+      storeSessionId(result.data[0].id)
+
     log('fetchConversations completed successfully', {
       resultType: typeof result,
       hasData: !!(result as any)?.data,

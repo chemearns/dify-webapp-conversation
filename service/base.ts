@@ -4,6 +4,16 @@ import type { AnnotationReply, MessageEnd, MessageReplace, ThoughtItem } from '@
 import type { VisionFile } from '@/types/app'
 import { error, log } from '@/utils/iframe-diagnostics'
 
+// Session storage for iframe context
+const getSessionId = () => typeof window !== 'undefined'
+  ? localStorage.getItem('dify_session_id')
+  : null
+
+const storeSessionId = (id: string) => {
+  if (typeof window !== 'undefined')
+    localStorage.setItem('dify_session_id', id)
+}
+
 const TIME_OUT = 100000
 
 const ContentType = {
@@ -13,13 +23,23 @@ const ContentType = {
   download: 'application/octet-stream', // for download
 }
 
+const getBaseHeaders = () => {
+  const headers: Record<string, string> = {
+    'Content-Type': ContentType.json,
+  }
+
+  const sessionId = getSessionId()
+  if (sessionId)
+    headers['x-session-id'] = sessionId
+
+  return headers
+}
+
 const baseOptions = {
   method: 'GET',
   mode: 'cors',
   credentials: 'include', // always send cookies、HTTP Basic authentication.
-  headers: new Headers({
-    'Content-Type': ContentType.json,
-  }),
+  headers: new Headers(getBaseHeaders()),
   redirect: 'follow',
 }
 
