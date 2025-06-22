@@ -56,8 +56,8 @@ export const fetchConversations = async () => {
     log('About to call get() for conversations')
     const result = await get('conversations', { params: { limit: 100, first_id: '' } }) as { data?: any[] }
 
-    if (result.data && Array.isArray(result.data) && result.data.length > 0)
-      storeSessionId(result.data[0].id)
+    /* if (result.data && Array.isArray(result.data) && result.data.length > 0)
+      storeSessionId(result.data[0].id) */
 
     log('fetchConversations completed successfully', {
       resultType: typeof result,
