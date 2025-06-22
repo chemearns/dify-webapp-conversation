@@ -5,9 +5,17 @@ import type { VisionFile } from '@/types/app'
 import { error, log } from '@/utils/iframe-diagnostics'
 
 // Session storage for iframe context
-const getSessionId = () => typeof window !== 'undefined'
-  ? localStorage.getItem('dify_session_id')
-  : null
+const getSessionId = () => {
+  if (typeof window !== 'undefined') {
+    let sessionId = localStorage.getItem('dify_session_id')
+    if (!sessionId) {
+      sessionId = `iframe-session-${Date.now()}` // Force a consistent session
+      localStorage.setItem('dify_session_id', sessionId)
+    }
+    return sessionId
+  }
+  return null
+}
 
 const storeSessionId = (id: string) => {
   if (typeof window !== 'undefined')
