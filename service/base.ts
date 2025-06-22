@@ -9,7 +9,7 @@ const getSessionId = () => {
   if (typeof window !== 'undefined') {
     let sessionId = localStorage.getItem('dify_session_id')
     if (!sessionId) {
-      sessionId = `iframe-session-${Date.now()}` // Force a consistent session
+      sessionId = `iframe-session-${Math.random().toString(36).substring(2, 15)}`
       localStorage.setItem('dify_session_id', sessionId)
     }
     return sessionId
