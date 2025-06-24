@@ -344,6 +344,9 @@ const Welcome: FC<IWelcomeProps> = ({
       </div>)
   }
 
+  if (hasSetInputs)
+    return null
+
   return (
     <div className='relative mobile:min-h-[48px] tablet:min-h-[64px]'>
       {hasSetInputs && renderHeader()}
