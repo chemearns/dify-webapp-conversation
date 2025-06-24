@@ -8,6 +8,12 @@ module.exports = {
     typography: require('./typography'),
     extend: {
       colors: {
+        compass: {
+          100: 'rgba(202, 245, 61, 0.05)',
+          200: '#667085',
+          500: 'rgb(202, 245, 61)',
+          600: '#24868f',
+        },
         gray: {
           50: '#F9FAFB',
           100: '#F3F4F6',

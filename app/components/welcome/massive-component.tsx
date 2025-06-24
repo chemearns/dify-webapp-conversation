@@ -14,8 +14,13 @@ export const AppInfoComp: FC<{ siteInfo: AppInfo }> = ({ siteInfo }) => {
   const { t } = useTranslation()
   return (
     <div>
-      <div className='flex items-center py-2 text-xl font-medium text-gray-700 rounded-md'>👏 {t('app.common.welcome')} {siteInfo.title}</div>
-      <p className='text-sm text-gray-500'>{siteInfo.description}</p>
+      <div className='flex items-center py-2 text-2xl text-compass-600 AyerDeck-Semibold-Web rounded-md'>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox='0 0 50 50' className="mr-2" fill="none">
+          <circle cx="25" cy="25" r="25" fill="#CAF53D" />
+          <path fill="#24868F" fill-rule="evenodd" d="M25 44.57C14.19 44.57 5.43 35.81 5.43 25S14.19 5.43 25 5.43 44.57 14.19 44.57 25 35.81 44.57 25 44.57Zm18.33-18.96h-4.27a.61.61 0 0 1 0-1.22h4.27c-.32-9.65-8.08-17.41-17.73-17.73v4.27a.61.61 0 0 1-1.22 0V6.66c-9.65.32-17.41 8.08-17.73 17.73h4.27a.61.61 0 0 1 0 1.22H6.66c.32 9.65 8.08 17.41 17.73 17.73v-4.27a.61.61 0 0 1 1.22 0v4.27c9.65-.32 17.41-8.08 17.73-17.73ZM28.9 20.76a.61.61 0 0 1 .32.31l6.12 13.46c.23.51-.3 1.04-.81.81l-13.46-6.12a.61.61 0 0 1-.31-.32l-6.12-13.46c-.23-.51.3-1.04.81-.81l13.46 6.12Zm-.43 1.62-6.09 6.09 11.17 5.08-5.08-11.17Zm-.87-.87-11.17-5.08 5.08 11.17 6.09-6.09Z" clip-rule="evenodd" />
+        </svg>
+        {siteInfo.title}</div>
+      <p className='text-sm text-compass-200'>{siteInfo.description}Navigate your leadership challenges with insights drawn directly from 10 years of The Leader's Digest.</p>
     </div>
   )
 }
@@ -45,10 +50,10 @@ export const ChatBtn: FC<{ onClick: () => void; className?: string }> = ({
   return (
     <Button
       type='primary'
-      className={cn(className, `space-x-2 flex items-center ${s.customBtn}`)}
+      className={cn(className, `space-x-2 flex items-center ${s.customBtn} !text-sm !font-semibold !bg-compass-500 !text-compass-600`)}
       onClick={onClick}>
-      <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd" d="M18 10.5C18 14.366 14.418 17.5 10 17.5C8.58005 17.506 7.17955 17.1698 5.917 16.52L2 17.5L3.338 14.377C2.493 13.267 2 11.934 2 10.5C2 6.634 5.582 3.5 10 3.5C14.418 3.5 18 6.634 18 10.5ZM7 9.5H5V11.5H7V9.5ZM15 9.5H13V11.5H15V9.5ZM9 9.5H11V11.5H9V9.5Z" fill="white" />
+      <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
+        <path fillRule="evenodd" clipRule="evenodd" d="M18 10.5C18 14.366 14.418 17.5 10 17.5C8.58005 17.506 7.17955 17.1698 5.917 16.52L2 17.5L3.338 14.377C2.493 13.267 2 11.934 2 10.5C2 6.634 5.582 3.5 10 3.5C14.418 3.5 18 6.634 18 10.5ZM7 9.5H5V11.5H7V9.5ZM15 9.5H13V11.5H15V9.5ZM9 9.5H11V11.5H9V9.5Z" fill="#24868f" />
       </svg>
       {t('app.chat.startChat')}
     </Button>

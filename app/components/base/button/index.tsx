@@ -34,7 +34,7 @@ const Button: FC<IButtonProps> = ({
 
   return (
     <div
-      className={`flex justify-center items-center content-center h-9 leading-5 rounded-lg px-4 py-2 text-base ${style} ${className && className}`}
+      className={`flex justify-center items-center content-center leading-5 rounded-lg px-4 py-2 text-base ${style} ${className && className}`}
       onClick={disabled ? undefined : onClick}
     >
       {children}

@@ -2,7 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add your custom fonts after the Tailwind imports */
+@font-face {
+  font-family: 'Ayer Deck Web';
+  src: url('/fonts/AyerDeck-Semibold-Web.woff2') format('woff2'),
+       url('/fonts/AyerDeck-Semibold-Web.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ayer Deck Web';
+  src: url('/fonts/AyerDeck-SemiboldItalic-Web.woff2') format('woff2'),
+       url('/fonts/AyerDeck-SemiboldItalic-Web.woff') format('woff');
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* CSS utility classes for easy use */
+.AyerDeck-Semibold-Web {
+  font-family: 'Ayer Deck Web';
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: .64px;
+}
+
+.AyerDeck-SemiboldItalic-Web {
+  font-family: 'Ayer Deck Web';
+  font-weight: 600;
+  font-style: italic;
+}
+
 :root {
+  --font-heading: 'Ayer Deck Web', sans-serif;
   --max-width: 1100px;
   --border-radius: 12px;
   --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
