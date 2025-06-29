@@ -9,7 +9,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://sm.cms.jiminy.co.nz https://*.jiminy.co.nz"
+          "value": "frame-ancestors 'self' https://sm.cms.jiminy.co.nz https://*.jiminy.co.nz http://sm.test https://suzimcalpine.com https://*.suzimcalpine.com"
         }
       ]
     }
