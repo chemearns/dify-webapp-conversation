@@ -19,7 +19,7 @@ import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import Loading from '@/app/components/base/loading'
 import { replaceVarWithValues, userInputsFormToPromptVariables } from '@/utils/prompt'
 import AppUnavailable from '@/app/components/app-unavailable'
-import { API_KEY, APP_ID, APP_INFO, isShowPrompt, promptTemplate } from '@/config'
+import { API_KEY, APP_ID, APP_INFO, SKIP_LANDING_SCREEN, isShowPrompt, promptTemplate } from '@/config'
 import type { Annotation as AnnotationType } from '@/types/log'
 import { addFileInfos, sortAgentSorts } from '@/utils/tools'
 import { error, log } from '@/utils/iframe-diagnostics'
@@ -271,6 +271,20 @@ const Main: FC<IMainProps> = () => {
           setCurrConversationId(_conversationId, APP_ID, false)
 
         setInited(true)
+
+        if (SKIP_LANDING_SCREEN && isNewConversation) {
+          const prompt_variables = userInputsFormToPromptVariables(user_input_form)
+          const defaultInputs: Record<string, any> = {}
+          prompt_variables.forEach((variable) => {
+            defaultInputs[variable.key] = variable.default || ''
+          })
+
+          setTimeout(() => {
+            setCurrInputs(defaultInputs)
+            setChatStarted()
+            setChatList(generateNewChatListWithOpenStatement('', defaultInputs))
+          }, 100)
+        }
       }
       catch (e: any) {
         if (e.status === 404) {
